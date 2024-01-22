@@ -1,0 +1,26 @@
+# WEB SERVER CONFIGURATION
+webServerType: "apache" # The web server to install and configure. Can be "apache", "nginx". Overrides existing Apache/nginx configurations. Leave blank to skip web server config.
+webServerHost: "single-tenant-chroma-server.example.com" # Host/Domain to configure the app at. Make sure that the host's DNS points to your server (A record). Only applies if webServerType is not empty.
+webServerPort: 80 # Port used for the web server. Typically 80.
+webServerEnableSSL: false # If `true`, web server config will be extended to enable SSL connections.
+webServerSSLPort: 443 # Port used for SSL connections. Typically 443.
+webServerSSLCertificateFile: "/etc/ssl/certs/chroma-proxy.example.com.crt" # Path to the SSL certificate file. Only necessary if enableSSL is set to `true`.
+webServerSSLCertificateKeyFile: "/etc/ssl/private/chroma-proxy.example.com.key" # Path to the SSL certificate key file. Only necessary if enableSSL is set to `true`.
+
+# APP CONFIGURATION
+appName: "single-tenant-chroma-server" # Name given to the node app in PM2
+appPort: 8070 # Port used by the node app.
+authServerEndpoint: "https://localhost:3000/validate-token" # External endpoint to validate the token against. Needs to return `{userId:string}` or `{ data: { userId:string } }`. Leave empty to treat the token as a pre-validated UUID instead.
+authServerAPIKey: "" # Value to send along to the auth server as `x-api-key` header, if any.
+dbPath: "./chromadb" # Path to the directory containing ChromaDB databases. Make sure to grant read and write rights to the user running the app.
+dbTTL: 180000 # Time in ms before idle user-specific ChromaDB instances are shut down.
+compileFromSource: true # If `true`, install dev dependencies and TypeScript and compile from source instead of using the shipped index.js.
+
+# DOCKER CONFIGURATION
+useDocker: false # If `true`, install docker and run a container containing the node app
+dockerImageName: "chroma-server-proxy-image" # Name for the docker image. Only necessary if useDocker is set to `true`.
+dockerContainerName: "chroma-server-proxy-container" # Name for the docker container. Only necessary if useDocker is set to `true`.
+
+# FRAMEWORK VERSIONS
+nodeVersion: "20.11.0" # NodeJS version to install and use for the app. Leave blank to use latest compatible version.
+pythonVersion: "3.10" # Python version to install and use for ChromaDB. Leave blank to use latest compatible version. Needs to be 3.10 or higher.
