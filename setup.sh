@@ -14,6 +14,9 @@ source ./setup/basics.sh
 # Load config
 source ./setup/config.sh
 
+# Explain and ask for confirmation
+source ./setup/explain.sh
+
 # Setup Apache VirtualHost
 source ./setup/apache.sh
 
@@ -29,7 +32,16 @@ fi
 # Create database directory if it doesn't exist
 if [ ! -d "$DB_PATH" ]; then
   echo "Creating database directory ${DB_PATH}.."
-  sudo mkdir -p "$DB_PATH"
+  mkdir -p "$DB_PATH"
+fi
+
+if [ -n "$LOG_FILE" ]; then
+  LOG_DIR=$(dirname "$LOG_FILE")
+  if [ ! -d "$LOG_DIR" ]; then
+    echo "Creating log dir and file ${LOG_FILE}.."
+  fi
+  ABS_LOG_DIR=$(mkdir -p "$LOG_DIR" && realpath -m "$LOG_DIR")
+  touch "$ABS_LOG_DIR/$(basename "$LOG_FILE")"
 fi
 
 if [ "$USE_DOCKER" = true ]; then
@@ -40,23 +52,22 @@ if [ "$USE_DOCKER" = true ]; then
   echo "Building Docker image.."
 
   docker build  --build-arg APP_NAME=$APP_NAME \
-                --build-arg NODE_VERSION=$NODE_VERSION \
-                --build-arg PYTHON_VERSION=$PYTHON_VERSION \
                 --build-arg APP_PORT=$APP_PORT \
-                --build-arg DB_TTL=$DB_TTL \
-                --build-arg DB_PATH=$DB_PATH \
-                --build-arg AUTH_SERVER_ENDPOINT=$AUTH_SERVER_ENDPOINT \
-                --build-arg AUTH_SERVER_APIKEY=$AUTH_SERVER_APIKEY \
-                --build-arg COMPILE_FROM_SOURCE=$COMPILE_FROM_SOURCE \
-                --build-arg MIN_PYTHON_VERSION=$MIN_PYTHON_VERSION \
-                --build-arg MIN_SQLITE_VERSION=$MIN_SQLITE_VERSION \
-                --build-arg DEFAULT_PYTHON_VERSION=$DEFAULT_PYTHON_VERSION \
-                --build-arg DEFAULT_NVM_VERSION=$DEFAULT_NVM_VERSION \
                 --progress=plain \
                 --tag $DOCKER_IMAGE_NAME .
 
   echo "Starting Docker container.."
-  docker run -dp $APP_PORT:$APP_PORT -v $DB_PATH:$DB_PATH --name $DOCKER_CONTAINER_NAME $DOCKER_IMAGE_NAME
+
+  if [ -n "$ABS_LOG_DIR" ]; then
+    LOG_FILE_VOLUME="-v $ABS_LOG_DIR:$ABS_LOG_DIR"
+  fi
+  if [ "$BIND_LOCALHOST" = true ]; then
+    PORT_BINDING="127.0.0.1:$APP_PORT:$APP_PORT"
+  else
+    PORT_BINDING="$APP_PORT:$APP_PORT"
+  fi
+  
+  docker run -dp $PORT_BINDING -v $DB_PATH:$DB_PATH $LOG_FILE_VOLUME --name $DOCKER_CONTAINER_NAME $DOCKER_IMAGE_NAME
 
 else
 

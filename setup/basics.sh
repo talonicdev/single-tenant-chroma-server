@@ -21,6 +21,12 @@ if ! command -v curl &> /dev/null; then
   sudo apt-get install -yqq curl
 fi
 
+# realpath may not be available in virtual environments, install if necessary
+if ! command -v realpath &> /dev/null; then
+  echo "Installing realpath.."
+  sudo apt-get install -yqq realpath
+fi
+
 # we need to be able to add repos to the system, so install software-properties-common for the add-apt-repository command
 if ! command -v add-apt-repository &> /dev/null; then
   echo "Installing software-properties-common.."

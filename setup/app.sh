@@ -19,7 +19,11 @@ pm2 start index.js --name "$APP_NAME" --update-env -- \
   --authServerEndpoint "$AUTH_SERVER_ENDPOINT" \
   --authServerAPIKey "$AUTH_SERVER_APIKEY" \
   --dbPath "$DB_PATH" \
-  --chromaDbTTL "$DB_TTL"
+  --chromaDbTTL "$DB_TTL" \
+  --dbMaxInstances "$DB_MAX_INSTANCES" \
+  --queueTimeout "$QUEUE_TIMEOUT" \
+  --dbMaxRetries "$DB_MAX_RETRIES" \
+  --bindToLocalhost "$BIND_LOCALHOST"
 
 # Set up PM2 to auto-start the app on system reboot
 pm2 startup systemd -u "$USER" --hp "$HOME"

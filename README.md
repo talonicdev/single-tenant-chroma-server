@@ -64,10 +64,17 @@ The app accepts settings either as arguments, a config.yml or environments varia
 | Argument/YAML name | ENV name | Type | Description | Default |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
 | appPort | APP_PORT | int | Port used by the node app. | 8000 |
+| bindToLocalhost | BIND_LOCALHOST | bool | If `true`, the node app will only listen to 127.0.0.1 and not be directly remotely accessible. | false |
 | authServerEndpoint | AUTH_SERVER_ENDPOINT | string | External endpoint to validate the token against. Needs to return `{userId:string}` or `{ data: { userId:string } }`. Leave empty to treat the token as a pre-validated UUID instead. | *none* |
 | authServerAPIKey | AUTH_SERVER_APIKEY | string | Value to send along to the auth server as `x-api-key` header, if any. | *none* |
 | dbPath | DB_PATH | string | Path to the directory containing ChromaDB databases. Make sure it exists and can be read and written by the app. | `./chromadb` |
 | dbTTL | DB_TTL | int | Time in ms before idle user-specific ChromaDB instances are shut down. | 180000 |
+| dbMaxInstances | DB_MAX_INSTANCES | int | Maximum amount of ChromaDB instances to keep active at the same time. Additional requests will be queued until a slot is available. | 100 |
+| dbMaxRetries | MAX_RETRIES | int | Maximum amount of retries to start a ChromaDB instance for a user. | 2 |
+| queueTimeout | QUEUE_TIMEOUT | int | Time in ms before requests will be rejected. | 30000 |
+| logFile | LOG_FILE | string | Path to a file name to write logs to. Leave empty to write to stdout/stderr instead. | *none* |
+| logLevel | LOG_LEVEL | string | Level of severity necessary to log an event. Options are `trace`, `debug`, `info`, `warn`, `error`, `fatal`. | info |
+| adminAPIKey | ADMIN_API_KEY | string | (Temporary) When sent to the app as `x-api-key` header, will provide a simple admin health check at `/admin-health`. | *none* |
 
 **4. Run the app**
 
@@ -82,19 +89,28 @@ pm2 start dist/index.js --name "single-tenant-chroma-server"    # add parameters
 import chromadb
 from chromadb.config import Settings
 
+# Replace with the hostname of your app
+proxy_host = "yourhost.example.com"
+# Apache/Nginx script installations: Port 80 (HTTP) or 443 (HTTPS). Otherwise the `appPort` of your app
+proxy_port = 80
+# Replace with a token that is unique to the user
+proxy_token = "6F4b4lU9ay2vMTLuK8fwhawjG80o7yVbW9ly365cm0aBvO0w0gIdmUSqdEPtuZaD"
+
+# Initialize the chroma client as an HTTP client
 client = chromadb.HttpClient(
-    host='localhost', 
-    port=8000,
+    host=proxy_host, 
+    port=proxy_port,
     settings=Settings(
         chroma_client_auth_provider="chromadb.auth.token.TokenAuthClientProvider",
-        chroma_client_auth_credentials="<AUTH_TOKEN>"
+        chroma_client_auth_credentials=proxy_token
     )
 )
 # use client as usual
+print(client.get_version())
 ```
 Edit parameters accordingly (see configuration).
 
-More info on the [official ChromaDB website](https://docs.trychroma.com/usage-guide).
+More info and guides on the [official ChromaDB website](https://docs.trychroma.com/usage-guide).
 
 ## Maintenance
 

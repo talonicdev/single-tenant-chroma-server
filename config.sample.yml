@@ -1,23 +1,30 @@
 # WEB SERVER CONFIGURATION
-webServerType: "apache" # The web server to install and configure. Can be "apache", "nginx". Overrides existing Apache/nginx configurations. Leave blank to skip web server config.
+webServerType: "apache" # The web server to install and configure. Can be `apache`, `nginx` or empty. Overrides existing Apache/nginx configurations. Leave blank to skip web server config.
 webServerHost: "single-tenant-chroma-server.example.com" # Host/Domain to configure the app at. Make sure that the host's DNS points to your server (A record). Only applies if webServerType is not empty.
-webServerPort: 80 # Port used for the web server. Typically 80.
-webServerEnableSSL: false # If `true`, web server config will be extended to enable SSL connections.
-webServerSSLPort: 443 # Port used for SSL connections. Typically 443.
-webServerSSLCertificateFile: "/etc/ssl/certs/chroma-proxy.example.com.crt" # Path to the SSL certificate file. Only necessary if enableSSL is set to `true`.
-webServerSSLCertificateKeyFile: "/etc/ssl/private/chroma-proxy.example.com.key" # Path to the SSL certificate key file. Only necessary if enableSSL is set to `true`.
 
 # APP CONFIGURATION
-appName: "single-tenant-chroma-server" # Name given to the node app in PM2
+appName: "single-tenant-chroma-server" # Name given to the node app in the process manager PM2
 appPort: 8070 # Port used by the node app.
-authServerEndpoint: "https://localhost:3000/validate-token" # External endpoint to validate the token against. Needs to return `{userId:string}` or `{ data: { userId:string } }`. Leave empty to treat the token as a pre-validated UUID instead.
+authServerEndpoint: "https://localhost:3000/validate-token" # External endpoint to GET validate the token against. Needs to return `{userId:string}` or `{ data: { userId:string } }`. Leave empty to treat the token as a already validated and user-specific UUID instead.
 authServerAPIKey: "" # Value to send along to the auth server as `x-api-key` header, if any.
+adminAPIKey: "" # Value that, when sent to the app as `x-api-key` header, will provide a simple admin health check at `/admin-health`.
 dbPath: "./chromadb" # Path to the directory containing ChromaDB databases. Make sure to grant read and write rights to the user running the app.
-dbTTL: 180000 # Time in ms before idle user-specific ChromaDB instances are shut down.
+dbTTL: 180000 # Time in ms before idle user-specific ChromaDB instances are normally shut down. Instances may be shut down earlier if too many requests are queued.
+dbMaxInstances: 50 # Maximum amount of ChromaDB instances to keep active at the same time. Additional requests will be queued until a slot is available.
+queueTimeout: 300000 # Time in ms before requests will be rejected.
+dbMaxRetries: 2 # Maximum amount of retries to start a ChromaDB instance for a user. Chances are that it won't work the 10th time either.
+logFile: "" # Path to a file name to write logs to. Leave empty to write to stdout/stderr instead. If Docker is used, the directory containing it will be mounted to ensure persistence.
+logLevel: "info" # Level of severity necessary to log an event. Options are `trace`, `debug`, `info`, `warn`, `error`, `fatal`. Use `info` for production or `debug` for verbose logs of normal operations.
 compileFromSource: true # If `true`, install dev dependencies and TypeScript and compile from source instead of using the shipped index.js.
+bindToLocalhost: true # If `true`, the node app will only listen to 127.0.0.1 and not be directly remotely accessible. If a web server is selected, it will proxy requests regardless.
+
+# SSL CONFIGURATION
+enableSSL: false # If `true`, SSL will be enabled and enforced on either the web server config (if any) or the app.
+sslCertFile: "/etc/ssl/certs/chroma-proxy.example.com.crt" # Path to the SSL certificate file. Only necessary if enableSSL is set to `true`.
+sslCertKeyFile: "/etc/ssl/private/chroma-proxy.example.com.key" # Path to the SSL certificate key file. Only necessary if enableSSL is set to `true`.
 
 # DOCKER CONFIGURATION
-useDocker: false # If `true`, install docker and run a container containing the node app
+useDocker: false # If `true`, install docker and build/run a container containing the node app
 dockerImageName: "chroma-server-proxy-image" # Name for the docker image. Only necessary if useDocker is set to `true`.
 dockerContainerName: "chroma-server-proxy-container" # Name for the docker container. Only necessary if useDocker is set to `true`.
 

@@ -12,6 +12,9 @@ export TZ=Etc/UTC
 # Install sudo, curl, software-properties-common and yq 
 source ./setup/basics.sh
 
+# Load config.yml
+source ./setup/config.sh
+
 # Install Python
 source ./setup/python.sh
 
